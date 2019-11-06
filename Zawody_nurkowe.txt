@@ -1,0 +1,1 @@
+numer, inicjały, czas, pokonana droga
