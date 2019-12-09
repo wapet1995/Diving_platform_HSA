@@ -118,7 +118,6 @@ def Add_user_to_database():
         return False
     if((name is not None) and (name != "") and (birthday_day.isdigit()) and (0 < int(birthday_day) < 32) and (birthday_month.isdigit()) and (0 < int(birthday_month) < 13) and (birthday_year.isdigit()) and (int(birthday_year) > 1900)):
         birthday = int(birthday_year) * 10000 + int(birthday_month) * 100 + int(birthday_day)
-        print(birthday)
         curs = connection.cursor()
         sql = '''INSERT INTO Zawodnicy(imie,data_urodzenia) VALUES(?,?)'''
         zawodnik = (name, birthday)
@@ -135,6 +134,56 @@ def Add_user_to_database():
         print("Podano błędne dane zawodnika, spróbuj ponownie.")
     return False
     
+
+def Delete_user_from_database():
+    id = str(input("\nPodaj numer startowy zawodnika (q-cofnij): "))
+    if(id == 'q'or id =='Q'):
+        return False
+    name = str(input("\nPodaj imię zawodnika (q-cofnij): "))
+    if(name == 'q'or name =='Q'):
+        return False
+    if((name is not None) and (name != "")):
+        curs = connection.cursor()
+        sql = '''DELETE FROM Zawodnicy WHERE nr_start=? and imie=?'''
+        zawodnik = (id, name)
+        curs.execute(sql, zawodnik)
+        connection.commit()
+    else:
+        print("Podano błędne dane zawodnika, spróbuj ponownie.")
+    return False
+
+
+def Delete_measure_from_database():
+    id_zaw = str(input("\nPodaj numer startowy zawodnika (q-cofnij): "))
+    if(id_zaw == 'q'or id_zaw =='Q'):
+        return False
+    curs = connection.cursor()
+    sql = '''SELECT numer_pom, czas, droga, data, time FROM Pomiary WHERE zawodnik=?'''
+    pom_zaw = curs.execute(sql, id_zaw)
+    print('''Pomiary zawodnika o numerze startowym %d:\n\t%-10s %-11s %-14s %-10s %-8s''' %(int(id_zaw), 'nr pomiaru', 'Czas [s]', 'Odległość', 'Dzień', 'Godzina'))
+    for row in pom_zaw:
+        year = int(row[3] / 10000)
+        month = int(row[3] %10000 / 100)
+        day = int(row[3] %100)
+        hour = int(row[4] / 10000)
+        minute = int(row[4] %10000 / 100)
+        second = int(row[4] %100)
+        date_pom = "{0:04d}-{1:02d}-{2:02d}".format(year, month, day)
+        time_pom = "{0:02d}:{1:02d}:{2:02d}".format(hour, minute, second)
+        print("\t%-10d %-11.4f %-14.4f %-10s %-8s"  %(row[0], row[1], row[2], date_pom, time_pom))
+    id_pom = str(input("\nPodaj numer pomiaru (q-cofnij): "))
+    if(id_pom == 'q'or id_pom =='Q'):
+        return False
+    if((id_pom is not None) and (id_pom.isdigit())):
+        curs = connection.cursor()
+        sql = '''DELETE FROM Pomiary WHERE numer_pom=? and zawodnik=?'''
+        pomiar = (id_pom, id_zaw)
+        curs.execute(sql, pomiar)
+        connection.commit()
+    else:
+        print("Podano błędne dane zawodnika, spróbuj ponownie.")
+    return False
+
     
 def Get_userid_from_console():
     isvalid = False
@@ -196,17 +245,35 @@ if __name__== "__main__":
     p-nowy pomiar
     z-dodaj zawodnika
     w-wyświetl zawodników
-    t-wyświetl tabelę pomiarów\n\nKomenda: '''))
+    t-wyświetl tabelę pomiarów
+    d-usuń zawodnika/pomiar\n\nKomenda: '''))
     while(True):
         if key == 'q' or key == 'Q':
             break
         elif key == 'h' or key == 'H':
             print('''
-                Wyświetl tabelę pomiarów - wpisz komendę t lub T
-                Wyświetl zawodników      - wpisz komendę w lub W
-                Dodaj zawodnika          - wpisz komendę z lub Z
-                Nowy pomiar              - wpisz komendę p lub P
-                Pomoc                    - wpisz komendę h lub H
+                Usuń zawodnika           - wpisz komednę d lub D. 
+                                           Następnie wpisz z/Z i podaj dane zawodnika (numer startowy i 
+                                           imię).
+                                           
+                Usuń pomiar              - wpisz komednę d lub D. 
+                                           Następnie wpisz p lub P i podaj numer startowy zawodnika.
+                                           Po pojawieniu się listy pomiarów przypisanej do zawodnika,
+                                           nalezy wybrać pomiar wg numeru pomiaru i podać go w menu.
+                                           
+                Wyświetl tabelę pomiarów - wpisz komendę t lub T. Tabela posortowane jest wg czasu i
+                                           pokonanej odległości.
+                                           
+                Wyświetl zawodników      - wpisz komendę w lub W.
+                Dodaj zawodnika          - wpisz komendę z lub Z. 
+                                           Następnie wpisz dane zawodnika imię oraz
+                                           datę urodzenia (dzień , miesiąc i rok w osobnych liniach).
+                                           
+                Nowy pomiar              - wpisz komendę p lub P.
+                                           Następnie podaj numer startowy zadownika startującego.
+                                           Po wciśnięciu 'Enter' zostanie rozpoczęty pomiar.
+                                           
+                Pomoc                    - wpisz komendę h lub H.
                 Wyjście z programu       - wpisz komendę q lub Q.
             ''')
         elif key == 'z' or key == 'Z':
@@ -215,6 +282,17 @@ if __name__== "__main__":
             View_all_users_from_database()
         elif key == 't' or key == 'T':
             View_all_measures_from_database()
+        elif key == 'd' or key == 'd':
+            chn = str(input('''
+    Wybierz co chcesz usunać:
+    z-zawodnika
+    p-pomiar\n\nWybór: '''))
+            if chn == 'z' or chn == 'Z':
+                Delete_user_from_database()
+            elif chn == 'p' or chn == 'P':
+                Delete_measure_from_database()
+            else:
+                print("Wybrano błędną wartość lub wycofano komendę.")
         elif key == 'p' or key == 'P':
             confirm, person_id = Get_userid_from_console()
             if confirm == True:
