@@ -1,1 +1,8 @@
 numer, inicjały, czas, pokonana droga
+
+TODO
+- menu konfiguracji czasu pomiaru
+- czas pomiaru, mozliwość skończenia wcześniej
+- serwer wystawiający aktualne pomiary (sortowanie, filrt po dacie)
+- startowanie pomiaru po sygnale z zewnętrznego przycisku (komunikacja nieznana jeszcze)
+- 
